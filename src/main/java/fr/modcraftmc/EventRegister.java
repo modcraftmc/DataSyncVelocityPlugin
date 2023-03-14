@@ -6,6 +6,7 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
+import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -54,5 +55,11 @@ public class EventRegister {
         } catch (Exception e) {
             plugin.getLogger().error("Error while publishing message to rabbitmq : %s".formatted(e.getMessage()));
         }
+    }
+
+    @Subscribe
+    public void onProxyReload(ProxyReloadEvent event){
+        plugin.loadConfig();
+        rabbitmqDirectPublisher = new RabbitmqDirectPublisher(plugin.rabbitmqConnection);
     }
 }

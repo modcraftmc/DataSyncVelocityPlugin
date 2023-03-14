@@ -29,18 +29,15 @@ public class DataSync {
         this.server = server;
         this.dataDirectory = dataDirectory;
         this.logger = logger;
-        Toml config = loadConfig(dataDirectory);
-        String host = config.getString("rabbitmq.host");
-        String username = config.getString("rabbitmq.username");
-        String password = config.getString("rabbitmq.password");
-        String vhost = config.getString("rabbitmq.vhost");
-        this.rabbitmqConnection = new RabbitmqConnection(host, username, password, vhost);
+
     }
 
     @Subscribe
     public void onInitialize(ProxyInitializeEvent event) {
         logger.info("DataSync initializing !");
         server.getEventManager().register(this, new EventRegister(this));
+
+        loadConfig();
     }
 
     @Subscribe
@@ -49,7 +46,7 @@ public class DataSync {
         rabbitmqConnection.close();
     }
 
-    private Toml loadConfig(Path dataDirectory) {
+    private Toml readConfig() {
         File configFile = new File(dataDirectory.toFile(), "config.toml");
         if (!configFile.getParentFile().exists()) {
             configFile.getParentFile().mkdirs();
@@ -69,11 +66,27 @@ public class DataSync {
     }
 
     private String defaultFileContent(){
-        String content = "rabbitmq.host = \"localhost\"\n"+
-                "rabbitmq.username = \"guest\"\n"+
-                "rabbitmq.password = \"guest\"\n"+
-                "rabbitmq.vhost = \"/\"\n";
-        return content;
+        return """
+                [rabbitmq]
+                rabbitmq.host = "localhost"
+                rabbitmq.username = "guest"
+                rabbitmq.password = "guest"
+                rabbitmq.vhost = "/"
+                
+                """;
+    }
+
+    public void loadConfig(){
+        if(rabbitmqConnection != null){
+            rabbitmqConnection.close();
+        }
+
+        Toml config = readConfig();
+        String host = config.getString("rabbitmq.host");
+        String username = config.getString("rabbitmq.username");
+        String password = config.getString("rabbitmq.password");
+        String vhost = config.getString("rabbitmq.vhost");
+        this.rabbitmqConnection = new RabbitmqConnection(host, username, password, vhost);
     }
 
     public Logger getLogger() {
