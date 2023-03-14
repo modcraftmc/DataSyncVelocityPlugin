@@ -1,10 +1,9 @@
 package fr.modcraftmc;
 
-import com.rabbitmq.client.Channel;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
-import com.velocitypowered.api.event.connection.PreLoginEvent;
-import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.proxy.Player;
@@ -12,7 +11,7 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import fr.modcraftmc.message.SaveToDBMessage;
 import fr.modcraftmc.message.TransferMessage;
-import net.kyori.adventure.text.Component;
+import fr.modcraftmc.rabbitmq.RabbitmqDirectPublisher;
 
 import java.io.IOException;
 
@@ -35,10 +34,15 @@ public class EventRegister {
         // todo : fire event "save data to db"
         Player player = event.getPlayer();
         ServerConnection serverConnection = player.getCurrentServer().get();
+
         String message = "%s have been disconnected from the server : %s".formatted(player.getUsername(), serverConnection.getServerInfo().getName());
         plugin.getLogger().info(message);
-        String data = new SaveToDBMessage(player.getUsername(), serverConnection.getServerInfo().getName()).Serialize().toString();
+
+        JsonObject jsonData = new SaveToDBMessage(player.getUsername(), serverConnection.getServerInfo().getName()).Serialize();
+        Gson gson = new Gson();
+        String data = gson.toJson(jsonData);
         String serverName = serverConnection.getServerInfo().getName();
+
         try {
             rabbitmqDirectPublisher.publish(serverName, data);
         } catch (Exception e) {
@@ -52,11 +56,17 @@ public class EventRegister {
         Player player = event.getPlayer();
         RegisteredServer oldServer = player.getCurrentServer().isPresent() ? player.getCurrentServer().get().getServer() : null;
         RegisteredServer newServer = event.getResult().getServer().get();
+
         String message = "%s is connecting to the server : %s".formatted(player.getUsername(), newServer.getServerInfo().getName());
         plugin.getLogger().info(message);
+
         String oldServerName = oldServer == null ? "" : oldServer.getServerInfo().getName();
         String newServerName = newServer.getServerInfo().getName();
-        String data = new TransferMessage(player.getUsername(), oldServerName, newServerName).Serialize().toString();
+
+        JsonObject jsonData = new TransferMessage(player.getUsername(), oldServerName, newServerName).Serialize();
+        Gson gson = new Gson();
+        String data = gson.toJson(jsonData);
+
         try {
             rabbitmqDirectPublisher.publish(oldServerName, data);
         } catch (Exception e) {

@@ -3,12 +3,13 @@ package fr.modcraftmc.message;
 import com.google.gson.JsonObject;
 
 public class TransferMessage extends BaseMessage<TransferMessage> {
+    public static final String MESSAGE_NAME = "TransferMessage";
     private String playerName;
     private String oldServerName;
     private String newServerName;
 
     public TransferMessage(String playerName, String oldServerName, String newServerName) {
-        super("TransferMessage", TransferMessage::Deserialize);
+        super(MESSAGE_NAME, TransferMessage::Deserialize);
         this.playerName = playerName;
         this.oldServerName = oldServerName;
         this.newServerName = newServerName;
@@ -32,6 +33,11 @@ public class TransferMessage extends BaseMessage<TransferMessage> {
         jsonObject.addProperty("newServerName", newServerName);
         jsonObject.addProperty("playerName", playerName);
         return jsonObject;
+    }
+
+    @Override
+    protected void Handle() {
+
     }
 
     protected static TransferMessage Deserialize(JsonObject json) {

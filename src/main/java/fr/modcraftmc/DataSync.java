@@ -7,6 +7,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import fr.modcraftmc.rabbitmq.RabbitmqConnection;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
