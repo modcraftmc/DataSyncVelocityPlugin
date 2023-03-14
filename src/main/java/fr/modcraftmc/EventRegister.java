@@ -14,13 +14,20 @@ import fr.modcraftmc.message.SaveToDBMessage;
 import fr.modcraftmc.message.TransferMessage;
 import net.kyori.adventure.text.Component;
 
+import java.io.IOException;
+
 public class EventRegister {
     private DataSync plugin;
     private RabbitmqDirectPublisher rabbitmqDirectPublisher;
 
     public EventRegister(DataSync plugin) {
         this.plugin = plugin;
-        this.rabbitmqDirectPublisher = new RabbitmqDirectPublisher(plugin.rabbitmqConnection);
+        try {
+            this.rabbitmqDirectPublisher = new RabbitmqDirectPublisher(plugin.rabbitmqConnection);
+        } catch (IOException e) {
+            plugin.getLogger().error("Error while creating rabbitmq direct publisher : %s".formatted(e.getMessage()));
+            throw new RuntimeException(e);
+        }
     }
 
     @Subscribe
@@ -29,7 +36,7 @@ public class EventRegister {
         Player player = event.getPlayer();
         ServerConnection serverConnection = player.getCurrentServer().get();
         String message = "%s have been disconnected from the server : %s".formatted(player.getUsername(), serverConnection.getServerInfo().getName());
-        plugin.getLogger().debug(message);
+        plugin.getLogger().info(message);
         String data = new SaveToDBMessage(player.getUsername(), serverConnection.getServerInfo().getName()).Serialize().toString();
         String serverName = serverConnection.getServerInfo().getName();
         try {
@@ -43,11 +50,11 @@ public class EventRegister {
     public void onServerPreConnect(ServerPreConnectEvent event) {
         // todo : fire event "send data to message queue"
         Player player = event.getPlayer();
-        RegisteredServer oldServer = player.getCurrentServer().get().getServer();
+        RegisteredServer oldServer = player.getCurrentServer().isPresent() ? player.getCurrentServer().get().getServer() : null;
         RegisteredServer newServer = event.getResult().getServer().get();
         String message = "%s is connecting to the server : %s".formatted(player.getUsername(), newServer.getServerInfo().getName());
-        plugin.getLogger().debug(message);
-        String oldServerName = oldServer.getServerInfo().getName();
+        plugin.getLogger().info(message);
+        String oldServerName = oldServer == null ? "" : oldServer.getServerInfo().getName();
         String newServerName = newServer.getServerInfo().getName();
         String data = new TransferMessage(player.getUsername(), oldServerName, newServerName).Serialize().toString();
         try {
@@ -60,6 +67,11 @@ public class EventRegister {
     @Subscribe
     public void onProxyReload(ProxyReloadEvent event){
         plugin.loadConfig();
-        rabbitmqDirectPublisher = new RabbitmqDirectPublisher(plugin.rabbitmqConnection);
+        try {
+            rabbitmqDirectPublisher = new RabbitmqDirectPublisher(plugin.rabbitmqConnection);
+        } catch (IOException e) {
+            plugin.getLogger().error("Error while creating rabbitmq direct publisher : %s".formatted(e.getMessage()));
+            throw new RuntimeException(e);
+        }
     }
 }

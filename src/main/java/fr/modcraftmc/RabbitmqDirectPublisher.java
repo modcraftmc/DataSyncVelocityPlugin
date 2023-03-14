@@ -9,8 +9,9 @@ public class RabbitmqDirectPublisher {
 
     private Channel rabbitmqChannel;
 
-    public RabbitmqDirectPublisher(RabbitmqConnection rabbitmqConnection) {
+    public RabbitmqDirectPublisher(RabbitmqConnection rabbitmqConnection) throws IOException {
         this.rabbitmqChannel = rabbitmqConnection.createChannel();
+        rabbitmqChannel.exchangeDeclare(EXCHANGE_NAME, "direct");
     }
 
     public void publish(String routingKey, String message) throws IOException {

@@ -12,8 +12,10 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Path;
+import java.util.concurrent.TimeoutException;
 
 @Plugin(id = "datasync", name = "DataSync", version = "0.1.0-SNAPSHOT",
         description = "fire events to datasync mods on servers", authors = {"ModCraftMC"}, url = "https://modcraftmc.fr")
@@ -35,9 +37,9 @@ public class DataSync {
     @Subscribe
     public void onInitialize(ProxyInitializeEvent event) {
         logger.info("DataSync initializing !");
-        server.getEventManager().register(this, new EventRegister(this));
-
         loadConfig();
+
+        server.getEventManager().register(this, new EventRegister(this));
     }
 
     @Subscribe
@@ -68,27 +70,36 @@ public class DataSync {
     private String defaultFileContent(){
         return """
                 [rabbitmq]
-                rabbitmq.host = "localhost"
-                rabbitmq.port = 5672
-                rabbitmq.username = "guest"
-                rabbitmq.password = "guest"
-                rabbitmq.vhost = "/"
-                
+                host = "localhost"
+                port = 5672
+                username = "guest"
+                password = "guest"
+                vhost = "/"
                 """;
     }
 
     public void loadConfig(){
+        logger.info("Loading config file");
         if(rabbitmqConnection != null){
             rabbitmqConnection.close();
         }
 
         Toml config = readConfig();
-        String host = config.getString("rabbitmq.host");
-        int port = config.getLong("rabbitmq.port").intValue();
-        String username = config.getString("rabbitmq.username");
-        String password = config.getString("rabbitmq.password");
-        String vhost = config.getString("rabbitmq.vhost");
-        this.rabbitmqConnection = new RabbitmqConnection(host, port,username, password, vhost);
+        ConfigData configData;
+        try {
+            configData = config.getTable("rabbitmq").to(ConfigData.class);
+        } catch (Exception e) {
+            logger.error("Error while reading config file : %s".formatted(e.getMessage()));
+            throw new RuntimeException(e);
+        }
+
+        try {
+            this.rabbitmqConnection = new RabbitmqConnection(configData.host, configData.port, configData.username, configData.password, configData.vhost);
+        } catch (IOException | TimeoutException e) {
+            logger.error("Error while connecting to RabbitMQ : %s".formatted(e.getMessage()));
+            throw new RuntimeException(e);
+        }
+        logger.info("Connected to RabbitMQ");
     }
 
     public Logger getLogger() {
@@ -101,5 +112,13 @@ public class DataSync {
 
     public Path getDataDirectory() {
         return dataDirectory;
+    }
+
+    private class ConfigData {
+        private String host;
+        private int port;
+        private String username;
+        private String password;
+        private String vhost;
     }
 }

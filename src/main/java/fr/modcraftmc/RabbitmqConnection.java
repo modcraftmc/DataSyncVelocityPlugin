@@ -20,7 +20,7 @@ public class RabbitmqConnection {
 
     private List<Channel> channels = new ArrayList<Channel>();
 
-    public RabbitmqConnection(String host, int port, String username, String password, String virtualHost) {
+    public RabbitmqConnection(String host, int port, String username, String password, String virtualHost) throws IOException, TimeoutException {
         this.host = host;
         this.port = port;
         this.username = username;
@@ -34,14 +34,10 @@ public class RabbitmqConnection {
         factory.setPassword(password);
         factory.setVirtualHost(virtualHost);
 
-        try {
-            connection = factory.newConnection();
-        } catch (IOException | TimeoutException e) {
-            throw new RuntimeException(e);
-        }
+        connection = factory.newConnection();
     }
 
-    public RabbitmqConnection(String host, String username, String password, String virtualHost) {
+    public RabbitmqConnection(String host, String username, String password, String virtualHost) throws IOException, TimeoutException {
         this(host, 5672, username, password, virtualHost);
     }
 
