@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-public class rabbitmqConnection {
+public class RabbitmqConnection {
     private String host;
     private int port;
     private String username;
@@ -20,7 +20,7 @@ public class rabbitmqConnection {
 
     private List<Channel> channels = new ArrayList<Channel>();
 
-    public rabbitmqConnection(String host, int port, String username, String password, String virtualHost) {
+    public RabbitmqConnection(String host, int port, String username, String password, String virtualHost) {
         this.host = host;
         this.port = port;
         this.username = username;
@@ -41,7 +41,7 @@ public class rabbitmqConnection {
         }
     }
 
-    public rabbitmqConnection(String host, String username, String password, String virtualHost) {
+    public RabbitmqConnection(String host, String username, String password, String virtualHost) {
         this(host, 5672, username, password, virtualHost);
     }
 

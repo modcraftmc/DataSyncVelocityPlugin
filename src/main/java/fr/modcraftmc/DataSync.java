@@ -2,6 +2,7 @@ package fr.modcraftmc;
 
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
 import org.slf4j.Logger;
@@ -14,13 +15,13 @@ public class DataSync {
     private final ProxyServer server;
     private final Logger logger;
 
-    public rabbitmqConnection rabbitmqConnection;
+    public RabbitmqConnection rabbitmqConnection;
 
     @Inject
     public DataSync(ProxyServer server, Logger logger) {
         this.server = server;
         this.logger = logger;
-        this.rabbitmqConnection = new rabbitmqConnection("localhost", "guest", "guest", "/");
+        this.rabbitmqConnection = new RabbitmqConnection("localhost", "guest", "guest", "/");
     }
 
     @Subscribe
@@ -29,7 +30,17 @@ public class DataSync {
         server.getEventManager().register(this, new EventRegister(this));
     }
 
+    @Subscribe
+    public void onShutdown(ProxyShutdownEvent event) {
+        logger.info("DataSync shutting down !");
+        rabbitmqConnection.close();
+    }
+
     public Logger getLogger() {
         return logger;
+    }
+
+    public ProxyServer getProxyServer() {
+        return server;
     }
 }

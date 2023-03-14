@@ -1,0 +1,43 @@
+package fr.modcraftmc.message;
+
+import com.google.gson.JsonObject;
+
+public class TransferMessage extends BaseMessage<TransferMessage> {
+    private String playerName;
+    private String oldServerName;
+    private String newServerName;
+
+    public TransferMessage(String playerName, String oldServerName, String newServerName) {
+        super("TransferMessage", TransferMessage::Deserialize);
+        this.playerName = playerName;
+        this.oldServerName = oldServerName;
+        this.newServerName = newServerName;
+    }
+
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    public String getOldServerName() {
+        return oldServerName;
+    }
+
+    public String getNewServerName() {
+        return newServerName;
+    }
+
+    public JsonObject Serialize() {
+        JsonObject jsonObject = super.Serialize();
+        jsonObject.addProperty("oldServerName", oldServerName);
+        jsonObject.addProperty("newServerName", newServerName);
+        jsonObject.addProperty("playerName", playerName);
+        return jsonObject;
+    }
+
+    protected static TransferMessage Deserialize(JsonObject json) {
+        String oldServerName = json.get("oldServerName").getAsString();
+        String newServerName = json.get("newServerName").getAsString();
+        String playerName = json.get("playerName").getAsString();
+        return new TransferMessage(playerName, oldServerName, newServerName);
+    }
+}
