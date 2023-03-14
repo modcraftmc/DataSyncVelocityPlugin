@@ -69,6 +69,7 @@ public class DataSync {
         return """
                 [rabbitmq]
                 rabbitmq.host = "localhost"
+                rabbitmq.port = 5672
                 rabbitmq.username = "guest"
                 rabbitmq.password = "guest"
                 rabbitmq.vhost = "/"
@@ -83,10 +84,11 @@ public class DataSync {
 
         Toml config = readConfig();
         String host = config.getString("rabbitmq.host");
+        int port = config.getLong("rabbitmq.port").intValue();
         String username = config.getString("rabbitmq.username");
         String password = config.getString("rabbitmq.password");
         String vhost = config.getString("rabbitmq.vhost");
-        this.rabbitmqConnection = new RabbitmqConnection(host, username, password, vhost);
+        this.rabbitmqConnection = new RabbitmqConnection(host, port,username, password, vhost);
     }
 
     public Logger getLogger() {
