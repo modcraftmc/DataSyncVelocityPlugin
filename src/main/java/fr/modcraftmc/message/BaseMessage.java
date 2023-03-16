@@ -2,12 +2,10 @@ package fr.modcraftmc.message;
 
 import com.google.gson.JsonObject;
 
-import java.util.function.Function;
+public abstract class BaseMessage {
+    String messageName;
 
-public abstract class BaseMessage<T extends BaseMessage> {
-    String messageName = null;
-
-    BaseMessage(String messageName, Function<JsonObject, T> deserializer) {
+    BaseMessage(String messageName) {
         this.messageName = messageName;
     }
     protected JsonObject Serialize() {

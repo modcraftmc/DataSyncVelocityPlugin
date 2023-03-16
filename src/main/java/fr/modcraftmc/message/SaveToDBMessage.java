@@ -2,23 +2,15 @@ package fr.modcraftmc.message;
 
 import com.google.gson.JsonObject;
 
-public class SaveToDBMessage extends BaseMessage<SaveToDBMessage> {
+public class SaveToDBMessage extends BaseMessage {
     public static final String MESSAGE_NAME = "SaveToDBMessage";
-    private String playerName;
-    private String serverName;
+    private final String playerName;
+    private final String serverName;
 
     public SaveToDBMessage(String playerName, String serverName) {
-        super(MESSAGE_NAME, SaveToDBMessage::Deserialize);
+        super(MESSAGE_NAME);
         this.playerName = playerName;
         this.serverName = serverName;
-    }
-
-    public String getPlayerName() {
-        return playerName;
-    }
-
-    public String getServerName() {
-        return serverName;
     }
 
     public JsonObject Serialize() {
@@ -35,7 +27,5 @@ public class SaveToDBMessage extends BaseMessage<SaveToDBMessage> {
     }
 
     @Override
-    protected void Handle() {
-
-    }
+    protected void Handle() {}
 }

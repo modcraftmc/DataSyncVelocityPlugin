@@ -2,29 +2,19 @@ package fr.modcraftmc.message;
 
 import com.google.gson.JsonObject;
 
-public class TransferMessage extends BaseMessage<TransferMessage> {
+public class TransferMessage extends BaseMessage {
     public static final String MESSAGE_NAME = "TransferMessage";
-    private String playerName;
-    private String oldServerName;
-    private String newServerName;
+    private final String playerName;
+    private final String oldServerName;
+    private final String newServerName;
+    private final boolean areLinked;
 
-    public TransferMessage(String playerName, String oldServerName, String newServerName) {
-        super(MESSAGE_NAME, TransferMessage::Deserialize);
+    public TransferMessage(String playerName, String oldServerName, String newServerName, boolean areLinked) {
+        super(MESSAGE_NAME);
         this.playerName = playerName;
         this.oldServerName = oldServerName;
         this.newServerName = newServerName;
-    }
-
-    public String getPlayerName() {
-        return playerName;
-    }
-
-    public String getOldServerName() {
-        return oldServerName;
-    }
-
-    public String getNewServerName() {
-        return newServerName;
+        this.areLinked = areLinked;
     }
 
     public JsonObject Serialize() {
@@ -32,18 +22,18 @@ public class TransferMessage extends BaseMessage<TransferMessage> {
         jsonObject.addProperty("oldServerName", oldServerName);
         jsonObject.addProperty("newServerName", newServerName);
         jsonObject.addProperty("playerName", playerName);
+        jsonObject.addProperty("areLinked", areLinked);
         return jsonObject;
     }
 
     @Override
-    protected void Handle() {
-
-    }
+    protected void Handle() {}
 
     protected static TransferMessage Deserialize(JsonObject json) {
         String oldServerName = json.get("oldServerName").getAsString();
         String newServerName = json.get("newServerName").getAsString();
         String playerName = json.get("playerName").getAsString();
-        return new TransferMessage(playerName, oldServerName, newServerName);
+        boolean areLinked = json.get("areLinked").getAsBoolean();
+        return new TransferMessage(playerName, oldServerName, newServerName, areLinked);
     }
 }

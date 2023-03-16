@@ -16,6 +16,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 @Plugin(id = "datasync", name = "DataSync", version = "0.1.0-SNAPSHOT",
@@ -24,6 +27,7 @@ public class DataSync {
     private final ProxyServer server;
     private final Logger logger;
     private final Path dataDirectory;
+    private final Map<String, String[]> groups = new HashMap<>();
 
     public RabbitmqConnection rabbitmqConnection;
 
@@ -76,6 +80,10 @@ public class DataSync {
                 username = "guest"
                 password = "guest"
                 vhost = "/"
+                
+                [groups]
+                # Example :
+                # group1 = ["server1", "server2"]
                 """;
     }
 
@@ -86,9 +94,9 @@ public class DataSync {
         }
 
         Toml config = readConfig();
-        ConfigData configData;
+        RabbitmqConfigData configData;
         try {
-            configData = config.getTable("rabbitmq").to(ConfigData.class);
+            configData = config.getTable("rabbitmq").to(RabbitmqConfigData.class);
         } catch (Exception e) {
             logger.error("Error while reading config file : %s".formatted(e.getMessage()));
             throw new RuntimeException(e);
@@ -101,6 +109,38 @@ public class DataSync {
             throw new RuntimeException(e);
         }
         logger.info("Connected to RabbitMQ");
+
+        groups.clear();
+        config.getTable("groups").toMap().forEach((key, value) -> {
+            if(value instanceof String[] serverList){
+                for(String server : serverList){
+                    String group = getServerGroup(server);
+                    if(group != null){
+                        logger.error("Server %s is already in group %s could not add %s group".formatted(server, group, key));
+                        return;
+                    }
+                }
+                groups.put(key, serverList);
+            }
+        });
+        logger.info("Loaded %d groups".formatted(groups.size()));
+    }
+
+    public String getServerGroup(String serverName){
+        for (Map.Entry<String, String[]> entry : groups.entrySet()) {
+            for (String server : entry.getValue()) {
+                if(server.equals(serverName)){
+                    return entry.getKey();
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean areServersInSameGroup(String server1, String server2){
+        String group = getServerGroup(server1);
+        if(group == null) return false;
+        return Arrays.asList(groups.get(group)).contains(server2);
     }
 
     public Logger getLogger() {
@@ -115,7 +155,7 @@ public class DataSync {
         return dataDirectory;
     }
 
-    private class ConfigData {
+    private class RabbitmqConfigData {
         private String host;
         private int port;
         private String username;

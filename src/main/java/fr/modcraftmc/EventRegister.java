@@ -62,11 +62,13 @@ public class EventRegister {
 
         String oldServerName = oldServer == null ? "" : oldServer.getServerInfo().getName();
         String newServerName = newServer.getServerInfo().getName();
+        boolean isSameGroup = plugin.areServersInSameGroup(oldServerName, newServerName);
 
-        JsonObject jsonData = new TransferMessage(player.getUsername(), oldServerName, newServerName).Serialize();
+        JsonObject jsonData = new TransferMessage(player.getUsername(), oldServerName, newServerName, isSameGroup).Serialize();
         Gson gson = new Gson();
         String data = gson.toJson(jsonData);
 
+        plugin.getLogger().info("Sending message to rabbitmq : %s".formatted(data));
         try {
             rabbitmqDirectPublisher.publish(oldServerName, data);
         } catch (Exception e) {
