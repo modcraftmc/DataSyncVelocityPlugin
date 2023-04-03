@@ -27,5 +27,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: launcher
-          path: build/libs/DataSyncVelocity*shade.jar
+          name: DataSyncVelocity
+          path: build/libs/*-shade.jar
