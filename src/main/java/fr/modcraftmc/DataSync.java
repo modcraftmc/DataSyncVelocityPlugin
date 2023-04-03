@@ -18,6 +18,7 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -111,16 +112,18 @@ public class DataSync {
         logger.info("Connected to RabbitMQ");
 
         groups.clear();
-        config.getTable("groups").toMap().forEach((key, value) -> {
-            if(value instanceof String[] serverList){
-                for(String server : serverList){
+        Toml groupsConfig = config.getTable("groups");
+        groupsConfig.toMap().forEach((key, value) -> {
+            if(value instanceof List<?> serverList){
+                List<String> serverList1 = (List<String>) serverList; // Todo: find a better way to do this
+                for(String server : serverList1){
                     String group = getServerGroup(server);
                     if(group != null){
                         logger.error("Server %s is already in group %s could not add %s group".formatted(server, group, key));
                         return;
                     }
                 }
-                groups.put(key, serverList);
+                groups.put(key, serverList1.toArray(new String[0]));
             }
         });
         logger.info("Loaded %d groups".formatted(groups.size()));
