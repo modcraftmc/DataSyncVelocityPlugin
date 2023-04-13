@@ -1,20 +1,29 @@
 package fr.modcraftmc.rabbitmq;
 
 import com.rabbitmq.client.Channel;
+import fr.modcraftmc.DataSync;
+import fr.modcraftmc.References;
 
 import java.io.IOException;
 
 public class RabbitmqDirectPublisher {
-    private final String EXCHANGE_NAME = "direct_events";
+    public static RabbitmqDirectPublisher instance;
 
-    private Channel rabbitmqChannel;
+    private final Channel rabbitmqChannel;
 
-    public RabbitmqDirectPublisher(RabbitmqConnection rabbitmqConnection) throws IOException {
+    public RabbitmqDirectPublisher(RabbitmqConnection rabbitmqConnection) {
         this.rabbitmqChannel = rabbitmqConnection.createChannel();
-        rabbitmqChannel.exchangeDeclare(EXCHANGE_NAME, "direct");
+        try {
+            rabbitmqChannel.exchangeDeclare(References.DIRECT_EXCHANGE_NAME, "direct");
+        } catch (IOException e) {
+            DataSync.instance.getLogger().error("Error while creating RabbitMQ exchange");
+            throw new RuntimeException(e);
+        }
+        instance = this;
     }
 
     public void publish(String routingKey, String message) throws IOException {
-        rabbitmqChannel.basicPublish(EXCHANGE_NAME, routingKey, null, message.getBytes());
+        DataSync.instance.getLogger().debug(String.format("Publishing message to %s with routing key %s", References.DIRECT_EXCHANGE_NAME, routingKey));
+        rabbitmqChannel.basicPublish(References.DIRECT_EXCHANGE_NAME, routingKey, null, message.getBytes());
     }
 }

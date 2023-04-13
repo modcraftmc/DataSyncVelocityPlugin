@@ -3,6 +3,7 @@ package fr.modcraftmc.rabbitmq;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import fr.modcraftmc.DataSync;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,23 +11,11 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 public class RabbitmqConnection {
-    private String host;
-    private int port;
-    private String username;
-    private String password;
-    private String virtualHost;
+    private final Connection connection;
 
-    private Connection connection;
+    private final List<Channel> channels = new ArrayList<>();
 
-    private List<Channel> channels = new ArrayList<Channel>();
-
-    public RabbitmqConnection(String host, int port, String username, String password, String virtualHost) throws IOException, TimeoutException {
-        this.host = host;
-        this.port = port;
-        this.username = username;
-        this.password = password;
-        this.virtualHost = virtualHost;
-
+    public RabbitmqConnection(String host, int port, String username, String password, String virtualHost) {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(host);
         factory.setPort(port);
@@ -34,31 +23,16 @@ public class RabbitmqConnection {
         factory.setPassword(password);
         factory.setVirtualHost(virtualHost);
 
-        connection = factory.newConnection();
+        try {
+            connection = factory.newConnection();
+        } catch (IOException | TimeoutException e) {
+            DataSync.instance.getLogger().error("Error while connecting to RabbitMQ : %s".formatted(e.getMessage()));
+            throw new RuntimeException(e);
+        }
     }
 
-    public RabbitmqConnection(String host, String username, String password, String virtualHost) throws IOException, TimeoutException {
+    public RabbitmqConnection(String host, String username, String password, String virtualHost) {
         this(host, 5672, username, password, virtualHost);
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getVirtualHost() {
-        return virtualHost;
     }
 
     public Channel createChannel() {
@@ -67,6 +41,7 @@ public class RabbitmqConnection {
             channels.add(channel);
             return channel;
         } catch (IOException e) {
+            DataSync.instance.getLogger().error(String.format("Error while creating rabbitmq channel %s", e.getMessage()));
             throw new RuntimeException(e);
         }
     }
@@ -76,12 +51,14 @@ public class RabbitmqConnection {
             try {
                 channel.close();
             } catch (IOException | TimeoutException e) {
+                DataSync.instance.getLogger().error(String.format("Error while closing rabbitmq channel %s", e.getMessage()));
                 throw new RuntimeException(e);
             }
         }
         try {
             connection.close();
         } catch (IOException e) {
+            DataSync.instance.getLogger().error(String.format("Error while closing rabbitmq connection %s", e.getMessage()));
             throw new RuntimeException(e);
         }
     }
